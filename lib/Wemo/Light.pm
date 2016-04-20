@@ -104,7 +104,11 @@ sub _setStatus {
     my $status = sprintf "&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;DeviceStatus&gt;&lt;IsGroupAction&gt;NO&lt;/IsGroupAction&gt;&lt;DeviceID available=&quot;YES&quot;&gt;%s&lt;/DeviceID&gt;&lt;CapabilityID&gt;%s&lt;/CapabilityID&gt;&lt;CapabilityValue&gt;%s&lt;/CapabilityValue&gt;&lt;/DeviceStatus&gt;", $self->DeviceID(), $capability, $value;
 
     my $service = $dev->getservicebyname('urn:Belkin:service:bridge:1');
-    my $action_res = $service->postcontrol('SetDeviceStatus', {DeviceStatusList => $status});
+    my $res = $service->postcontrol('SetDeviceStatus', {DeviceStatusList => $status});
+
+    unless ($res->getstatuscode() == 200) {
+        die $res->getstatuscode();
+    }
 }
 
 sub _toggleSocket {
@@ -131,11 +135,36 @@ sub off {
 }
 
 sub dim {
-    my ($self, $value) = @_;
+    my ($self, $value, $timespan_in_seconds) = @_;
+
+    $timespan_in_seconds ||= 0;
 
     die "Invalid dimmer value: $value" if not looks_like_number($value) or $value < 0 or $value > 255;
+    die "Invalid dimmer timespan: $timespan_in_seconds" if not looks_like_number($timespan_in_seconds) or $timespan_in_seconds < 0 or $timespan_in_seconds > 6533;
 
-    $self->_setStatus('10008', "$value:0");
+    $timespan_in_seconds *= 10;
+    $self->_setStatus('10008', "$value:$timespan_in_seconds");
+}
+
+sub sleep {
+    my ($self, $time) = @_;
+
+    $time *= 10;
+    my $date = time();
+
+    $self->_setStatus('30008', "${time}:${date}");
+}
+
+sub fadein {
+    my ($self, $val) = @_;
+
+    $self->_setStatus('30009', "0:$val");
+}
+
+sub fadeout {
+    my ($self, $val) = @_;
+
+    $self->_setStatus('30009', "1:$val");
 }
 
 sub FromXmlNode {
