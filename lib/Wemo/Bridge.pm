@@ -29,11 +29,13 @@ has 'groups' => (
 );
 
 sub _init {
-    my ($self) = @_;
+    my ($self, $timeout) = @_;
+
+    $timeout ||= 1;
 
     my $control = $self->UPnP_Control();
     
-    my @bridges = $control->search(st =>'urn:Belkin:device:bridge:1', mx => 1);
+    my @bridges = $control->search(st =>'urn:Belkin:device:bridge:1', mx => $timeout);
 
     foreach my $bridge (@bridges) {
         my $udn = $bridge->getudn();
@@ -60,8 +62,8 @@ sub _init {
 
         my @groups = ();
         for my $node ($doc->find('/DeviceLists/DeviceList/GroupInfos/*')->get_nodelist()) {
-            require Wemo::Group;
-            my $group = Wemo::Group::FromXmlNode($node, $bridge);
+            require Wemo::LightGroup;
+            my $group = Wemo::LightGroup::FromXmlNode($node, $bridge);
             push @groups, $group;
         }
 
@@ -73,7 +75,7 @@ sub _init {
 sub BUILD {
     my ($self, $args) = @_;
 
-    $self->_init(); 
+    $self->_init($args->{timeout}) unless $args->{no_init};
 }
 
 1;
