@@ -63,8 +63,6 @@ sub _setStatus {
     unless ($res->getstatuscode() == 200) {
         die $res->getstatuscode();
     }
-
-    print STDERR Dumper $res;
 }
 
 sub on {
