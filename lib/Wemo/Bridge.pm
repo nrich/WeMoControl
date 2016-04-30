@@ -72,6 +72,30 @@ sub _init {
     }
 }
 
+sub _search {
+    my ($self, $propname, $value, $devices) = @_;
+
+    for my $device (@$devices) {
+        if ($device->$propname eq $value) {
+            return $device;
+        }
+    }
+
+    return undef;
+}
+
+sub findLight {
+    my ($self, $propname, $value) = @_;
+
+    return $self->_search($propname, $value, $self->lights());
+}
+
+sub findGroup {
+    my ($self, $propname, $value) = @_;
+
+    return $self->_search($propname, $value, $self->groups());
+}
+
 sub BUILD {
     my ($self, $args) = @_;
 
