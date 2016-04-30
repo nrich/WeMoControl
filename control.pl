@@ -10,43 +10,38 @@ use lib qw/lib/;
 use Wemo::Bridge qw//;
 
 my %opts = ();
-getopts('o:d:f:t:', \%opts);
+getopts('lo:d:f:t:', \%opts);
 main(@ARGV);
 
 sub main {
     my ($name) = @_;
 
-    die "Need name\n" unless $name;
+    die "Need name\n" unless $opts{l} or $name;
 
     my $bridge = Wemo::Bridge->new();
 
-    for my $light (@{$bridge->lights()}) {
-        if ($light->FriendlyName() eq $name) {
-            my $dim = $opts{d};
-            $light->dim($dim, $opts{t}) if defined $dim;
-
-            if (defined $opts{o}) {
-                $opts{o} ? $light->on() : $light->off();
-            }
-
-            if (defined $opts{f}) {
-                $opts{f} < 0 ? $light->fadeout(-$opts{f}) : $light->fadein($opts{f});
-            }
+    if ($opts{l}) {
+        for my $light (@{$bridge->lights()}) {
+            print "Light: ", $light->FriendlyName(), "\n";
         }
+
+        for my $group (@{$bridge->groups()}) {
+            print "Group: ", $group->GroupName(), "\n";
+        }
+
+        exit 0;
     }
 
-    for my $group (@{$bridge->groups()}) {
-        if ($group->GroupName() eq $name) {
-            my $dim = $opts{d};
-            $group->dim($dim, $opts{t}) if defined $dim;
+    my $device = $bridge->findLight(FriendlyName => $name) || $bridge->findGroup(GroupName => $name);
 
-            if (defined $opts{f}) {
-                $opts{f} < 0 ? $group->fadeout(-$opts{f}) : $group->fadein($opts{f});
-            }
+    my $dim = $opts{d};
+    $device->dim($dim, $opts{t}) if defined $dim;
 
-            if (defined $opts{o}) {
-                $opts{o} ? $group->on() : $group->off();
-            }
-        }
+    if (defined $opts{o}) {
+        $opts{o} ? $device->on() : $device->off();
+    }
+
+    if (defined $opts{f}) {
+        $opts{f} < 0 ? $device->fadeout(-$opts{f}) : $device->fadein($opts{f});
     }
 }
