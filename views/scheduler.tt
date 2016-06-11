@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <script src="//code.jquery.com/jquery-1.9.1.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        
+        <title>WeMo Control Scheduler</title>
+
+        <style>
+        .loader {
+            margin: 60px auto;
+            font-size: 10px;
+            position: relative;
+            text-indent: -9999em;
+            border-top: 1.1em solid rgba(0,0,0, 0.2);
+            border-right: 1.1em solid rgba(0,0,0, 0.2);
+            border-bottom: 1.1em solid rgba(0,0,0, 0.2);
+            border-left: 1.1em solid #000000;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-animation: load8 1.1s infinite linear;
+            animation: load8 1.1s infinite linear;
+        }
+        .loader, .loader:after {
+            border-radius: 50%;
+            width: 10em;
+            height: 10em;
+        }
+        @-webkit-keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        </style>
+
+        <script>
+            $(function() {
+                function WemoViewModel() {
+                    var self = this;
+
+                    self.isBusy = ko.observable(false);
+                    self.loaded = ko.observable(false);
+
+                    self.devices = ko.observableArray([]);
+                    self.events = ko.observableArray([]);
+                    self.rules = ko.observableArray([]);
+
+                    self.dayPeriod = ko.observableArray([
+                        'AM',
+                        'PM'
+                    ]);
+
+                    self.hours = ko.observableArray([
+                        '1',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                        '10',
+                        '11',
+                        '12',
+                    ]);
+
+                    self.minutes = ko.observableArray([
+                        '00',
+                        '05',
+                        '10',
+                        '15',
+                        '20',
+                        '25',
+                        '30',
+                        '35',
+                        '40',
+                        '45',
+                        '50',
+                        '55',
+                    ]);
+
+                    self.days = ko.observableArray([
+                        {'id':1, name: 'Mon'},
+                        {'id':2, name: 'Tue'},
+                        {'id':3, name: 'Wed'},
+                        {'id':4, name: 'Thu'},
+                        {'id':5, name: 'Fri'},
+                        {'id':6, name: 'Sat'},
+                        {'id':7, name: 'Sun'},
+                    ]);
+
+                    self.loadPage = function() {
+                        $.getJSON('loadPage', {}, function(info, textStatus) {
+                            for (var i = 0; i < info.devices.length; i++) { 
+                                self.devices.push(info.devices[i]);
+                            };
+
+                            for (var i = 0; i < info.events.length; i++) { 
+                                self.events.push(info.events[i]);
+                            };
+
+                            for (var i = 0; i < info.rules.length; i++) { 
+                                self.rules.push(info.rules[i]);
+                            };
+
+                            self.selectedDevice(info.devices[0]);
+                            self.selectedEvent(info.events[0]);
+                            self.loaded(true);
+                        }); 
+                    }
+
+                    self.selectedHour = ko.observable();
+                    self.selectedMinute = ko.observable();
+                    self.selectedDevice = ko.observable();
+                    self.selectedRule = ko.observable();
+                    self.selectedEvent = ko.observable();
+                    self.selectedPeriod = ko.observable();
+                    self.selectedDays = ko.observableArray([]);
+
+                    self.save = function() {
+                        self.isBusy(true);
+                        $.post('save', {'rules':JSON.stringify(self.rules())}, function(data, textStatus) {
+                            self.isBusy(false);
+                        });
+                    }
+
+                    self.add = function() {
+                        self.rules.push({
+                            'hour': self.selectedHour(),
+                            'minute': self.selectedMinute(),
+                            'period': self.selectedPeriod(),
+                            'event': self.selectedEvent(),
+                            'device': self.selectedDevice(),
+                            'days': ko.toJS(self.selectedDays()).sort(),
+                        }); 
+                    }
+
+                    self.deleteRule = function(rule) {
+                        self.rules.remove(rule);
+                    }
+
+                    self.formatDays = function(days) {
+                        var dayNames = [];
+                        var i = 0;
+
+                        if (days.length == 7) {
+                            return 'Daily';
+                        }
+
+                        if (days.length == 5 && days[4] == 5) {
+                            return 'Weekdays';
+                        }
+
+                        if (days.length == 2 && days[0] == 6 && days[1] == 7) {
+                            return 'Weekdays';
+                        }
+
+                        while (i < days.length) {
+                            var match = ko.utils.arrayFirst(self.days(), function(day) {
+                                return day.id == days[i];
+                            });
+
+                            dayNames.push(match.name);
+                            i++;
+                        }
+
+                        return dayNames.join(',');
+                    }
+
+                    self.formatEvent = function(ev) {
+                        var match = ko.utils.arrayFirst(self.events(), function(e) {
+                            return ev == e.name;
+                        });
+
+                        return match.label;
+                    }
+
+                    self.loadPage();
+                }
+
+                ko.applyBindings(new WemoViewModel());
+            });
+        </script>
+    </head>
+
+    <body>
+        <div class="loader" data-bind="visible: !loaded()">
+        </div>
+        <div class="container" data-bind="visible: loaded()">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Days</th>
+                        <th>Event</th>
+                        <th>Device</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: rules">
+                    <tr>
+                        <td>
+                            <span data-bind="text: hour"></span>:<span data-bind="text: minute"></span>
+                            <span data-bind="text: period"></span> 
+                        </td>
+                        <td>
+                            <span data-bind="text: $root.formatDays(days)"></span>
+                        </td>
+                        <td data-bind="text: $root.formatEvent(event)"></td>
+                        <td data-bind="text: device"></td>
+                        <td>
+                            <button class="btn btn-warning" data-bind="click: $root.deleteRule">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-success" data-bind="click: save, disable: isBusy">Save</button>
+
+            <div>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="hour" class="col-sm-2 control-label">At</label>
+                        <div class="col-sm-10">
+                            <select id="hour" name="hour" data-bind="options: hours, value: selectedHour"></select>
+                            <select name="minute" data-bind="options: minutes, value: selectedMinute"></select>
+                            <select name="dayPeriod" data-bind="options: dayPeriod, value: selectedPeriod"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="event" class="col-sm-2 control-label">Do</label>
+                        <div class="col-sm-10">
+                            <select id="event" name="event" data-bind="optionsValue: 'name', optionsText: 'label', options: events, value: selectedEvent"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="device" class="col-sm-2 control-label">Device</label>
+                        <div class="col-sm-10">
+                            <select id="device" name="device" data-bind="optionsValue: 'name', optionsText: 'name', options: devices, value: selectedDevice"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="days" class="col-sm-2 control-label">Days</label>
+                        <div class="col-sm-10">
+                            <span data-bind="foreach: days">
+                                <input id="days" type="checkbox" data-bind="checkedValue: id, checked: $parent.selectedDays">
+                                <span data-bind="text: name"></span>
+                                <br/>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="add" class="col-sm-2 control-label">&nbsp;</label>
+                        <div class="col-sm-10">
+                            <button id="add" class="btn btn-primary" data-bind="click: add, enable:selectedDays().length > 0">Add Rule</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
