@@ -5,8 +5,11 @@ use warnings;
 
 use Getopt::Std qw/getopts/;
 use Data::Dumper qw/Dumper/;
+use Cwd qw/cwd/;
+use File::Basename qw/basename dirname/;
 
 use lib qw/lib/;
+use lib dirname($0) . '/lib';
 use Wemo::Bridge qw//;
 
 my %opts = ();

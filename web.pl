@@ -10,6 +10,8 @@ use Dancer2::Serializer::JSON;
 use Data::Dumper qw/Dumper/;
 use File::Temp qw//;
 use List::MoreUtils qw(zip);
+use Cwd qw/cwd/;
+use File::Basename qw/basename dirname/;
 
 use lib qw/lib/;
 use Wemo::Bridge qw//;
@@ -88,7 +90,8 @@ sub rule_to_cron {
     my $device = $rule->{device};
     my @event = grep {$_->{name} eq $rule->{event}} @$events;
 
-    my $commandline = join ';', map {"/home/nrich/WeMoControl/control.pl $_ $device"} @{$event[0]->{commands}};
+    my $PATH = cwd();
+    my $commandline = join ';', map {"$PATH/control.pl $_ $device"} @{$event[0]->{commands}};
 
     my $cron = {
         m => $rule->{minute},
