@@ -181,4 +181,22 @@ sub FromXmlNode {
     return Wemo::Light->new(%args);
 }
 
+sub isOn {
+    my ($self) = @_;
+
+    my $state = $self->CurrentState();
+
+    return $state->[0] == 1; 
+}
+
+sub level {
+    my ($self) = @_;
+
+    my $state = $self->CurrentState();
+
+    my ($level) = split ':', $state->[1];
+
+    return $level;    
+}
+
 1;

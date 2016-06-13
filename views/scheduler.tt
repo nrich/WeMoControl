@@ -175,7 +175,7 @@
                         }
 
                         if (days.length == 2 && days[0] == 6 && days[1] == 7) {
-                            return 'Weekdays';
+                            return 'Weekends';
                         }
 
                         while (i < days.length) {

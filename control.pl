@@ -26,6 +26,8 @@ sub main {
     if ($opts{l}) {
         for my $light (@{$bridge->lights()}) {
             print "Light: ", $light->FriendlyName(), "\n";
+            print "\tOn: ", $light->isOn() ? ' Yes' : 'No', "\n";
+            print "\tLevel: ", $light->level(), "\n";
         }
 
         for my $group (@{$bridge->groups()}) {

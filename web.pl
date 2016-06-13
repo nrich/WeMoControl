@@ -58,6 +58,50 @@ ajax '/loadPage' => sub {
     };
 };
 
+
+ajax '/loadDevices' => sub {
+    my $bridge = Wemo::Bridge->new();
+
+    my @devices = ();
+    for my $light (@{$bridge->lights()}) {
+        push @devices, {
+            type => 'light',
+            name => $light->FriendlyName(),
+            state => $light->isOn(),
+            level => $light->level(),
+        };
+    }
+
+    return {
+        devices => \@devices,
+    };
+};
+
+ajax '/toggleState' => sub {
+    my $name = params->{'name'};
+
+    my $bridge = Wemo::Bridge->new();
+    my $device = $bridge->findLight(FriendlyName => $name);
+    $device->isOn() ? $device->off() : $device->on();
+
+    return {
+        result => 'OK',
+    };
+};
+
+ajax '/dim' => sub {
+    my $name = params->{'name'};
+    my $value = params->{'value'};
+
+    my $bridge = Wemo::Bridge->new();
+    my $device = $bridge->findLight(FriendlyName => $name);
+    $device->dim($value);
+
+    return {
+        result => 'OK',
+    };
+};
+
 ajax '/save' => sub {
     my $rules = from_json(params->{'rules'});
 
@@ -79,7 +123,8 @@ get '/scheduler' => sub {
 };
 
 get '/' => sub {
-    redirect '/scheduler';
+    #redirect '/scheduler';
+    template 'index';
 };
 
 dance();

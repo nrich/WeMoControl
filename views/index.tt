@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <script src="//code.jquery.com/jquery-1.9.1.js"></script>
+        <script src="//code.jquery.com/ui/1.11.0/jquery-ui.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script src="//github.com/gvas/knockout-jqueryui/releases/download/v2.2.2/knockout-jqueryui.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        <link href="//code.jquery.com/ui/1.12.0-rc.2/themes/smoothness/jquery-ui.css" rel="stylesheet">
+        
+        <title>WeMo Control</title>
+
+        <style>
+        .loader {
+            margin: 60px auto;
+            font-size: 10px;
+            position: relative;
+            text-indent: -9999em;
+            border-top: 1.1em solid rgba(0,0,0, 0.2);
+            border-right: 1.1em solid rgba(0,0,0, 0.2);
+            border-bottom: 1.1em solid rgba(0,0,0, 0.2);
+            border-left: 1.1em solid #000000;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-animation: load8 1.1s infinite linear;
+            animation: load8 1.1s infinite linear;
+        }
+        .loader, .loader:after {
+            border-radius: 50%;
+            width: 10em;
+            height: 10em;
+        }
+        @-webkit-keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        </style>
+
+        <script>
+            $(function() {
+                function Device(name, state, level) {
+                    var self = this;
+
+                    self.name = ko.observable(name);
+                    self.state = ko.observable(state ? true : false);
+                    self.level = ko.observable(level);
+
+                    self.buttonState = ko.computed(function() {
+                        return self.state() ? 'btn-danger' : 'btn-success';
+                    });
+
+                    self.toggleState = function() {
+                        $.post('toggleState', {'name':self.name()}, function(data, textStatus) {
+                            self.state(!self.state());
+                        });
+                    }
+
+                    self.slider = ko.computed({
+                        read: function() {
+                            return self.level();
+                        },
+                        write: function(newValue) {
+                            $.post('dim', {'name':self.name(), 'value':newValue}, function(data, textStatus) {
+                                self.level(newValue);
+                            });
+
+                        },
+                        owner: self,
+                    });
+                }
+
+                function WemoViewModel() {
+                    var self = this;
+
+                    self.isBusy = ko.observable(false);
+                    self.loaded = ko.observable(false);
+
+                    self.devices = ko.observableArray([]);
+
+                    self.loadPage = function() {
+                        $.getJSON('loadDevices', {}, function(info, textStatus) {
+                            for (var i = 0; i < info.devices.length; i++) { 
+                                self.devices.push(new Device(
+                                    info.devices[i].name,
+                                    info.devices[i].state,
+                                    info.devices[i].level
+                                ));
+                            };
+
+                            self.loaded(true);
+                        }); 
+                    }
+
+                    self.loadPage();
+                }
+
+                ko.applyBindings(new WemoViewModel());
+            });
+        </script>
+    </head>
+
+    <body>
+        <div class="loader" data-bind="visible: !loaded()">
+        </div>
+        <div class="container" data-bind="visible: loaded()">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>State</th>
+                        <th>Level</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: devices">
+                    <tr>
+                        <td><span data-bind="text: name"></span></td>
+                        <td>
+                            <button type="button" class="btn" aria-label="Left Align" data-bind="css: buttonState(), click:toggleState">
+                                <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+                            </button>
+                        </td>
+                        <td>
+                            <div style="width: 200px;" data-bind="slider: {value: slider, realtime: false, min:0, max:255, }"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
