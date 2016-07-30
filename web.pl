@@ -9,7 +9,7 @@ use Dancer2::Serializer::JSON;
 
 use Data::Dumper qw/Dumper/;
 use File::Temp qw//;
-use List::MoreUtils qw(zip);
+use List::MoreUtils qw/zip/;
 use Cwd qw/cwd/;
 use File::Basename qw/basename dirname/;
 
@@ -19,12 +19,14 @@ use Wemo::Bridge qw//;
 set serializer => 'JSON';
 
 my $events = [
-    {name => 'on', label => 'Turn On', commands => ['-o 1 -d 255']},
-    {name => 'off' => label => 'Turn Off', commands => ['-o 0']},
-    {name => 'in120' => label => 'Fade In (2 Minutes)', commands => ['-o 1 -d 1', '-t 120 -d 255']},
-    {name => 'in300' => label => 'Fade In (5 Minutes)', commands => ['-o 1 -d 1', '-t 300 -d 255']},
-    {name => 'out120' => label => 'Fade Out (2 Minutes)', commands => ['-o 1 -d 255', '-t 120 -d 0']},
-    {name => 'out300' => label => 'Fade Out (5 Minutes)', commands => ['-o 1 -d 255', '-t 300 -d 0']},
+    {name => 'on', label => 'Turn On', commands => ['-o 1 -d 255 -r 2']},
+    {name => 'off' => label => 'Turn Off', commands => ['-o 0 -r 2']},
+    {name => 'in120' => label => 'Fade In (2 Minutes)', commands => ['-o 1 -d 1 -r 1', '-t 120 -d 255 -r 2']},
+    {name => 'in300' => label => 'Fade In (5 Minutes)', commands => ['-o 1 -d 1 -r 1', '-t 300 -d 255 -r 2']},
+    {name => 'in1800' => label => 'Fade In (30 Minutes)', commands => ['-o 1 -d 1 -r 1', '-t 1800 -d 255 -r 2']},
+    {name => 'out120' => label => 'Fade Out (2 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 120 -d 0 -r 2']},
+    {name => 'out300' => label => 'Fade Out (5 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 300 -d 0 -r 2']},
+    {name => 'out1800' => label => 'Fade Out (30 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 1800 -d 0 -r 2']},
 ];
 
 ajax '/loadPage' => sub {
@@ -188,7 +190,7 @@ sub export_cron_entries {
     open my $fh, '-|', 'crontab -l' or die "Could not open crontab: $!\n";
     my @header = (qw/m h dom mon dow command/);
     while (my $line = <$fh>) {
-        my @data = split' ', $line, 6;
+        my @data = split ' ', $line, 6;
         my $cron = {zip @header, @data};
         push @entries, $cron;
     }
