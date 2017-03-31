@@ -4,8 +4,9 @@ use strict;
 use warnings;
 
 use Dancer2;
-use Dancer2::Plugin::Ajax;
 use Dancer2::Serializer::JSON;
+
+use JSON::Any;
 
 use Data::Dumper qw/Dumper/;
 use File::Temp qw//;
@@ -15,8 +16,6 @@ use File::Basename qw/basename dirname/;
 
 use lib qw/lib/;
 use Wemo::Bridge qw//;
-
-set serializer => 'JSON';
 
 my $events = [
     {name => 'on', label => 'Turn On', commands => ['-o 1 -d 255 -r 2']},
@@ -29,7 +28,7 @@ my $events = [
     {name => 'out1800' => label => 'Fade Out (30 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 1800 -d 0 -r 2']},
 ];
 
-ajax '/loadPage' => sub {
+get '/loadPage' => sub {
     my $bridge = Wemo::Bridge->new();
 
     my @devices = ();
@@ -53,15 +52,16 @@ ajax '/loadPage' => sub {
         push @rules, cron_to_rule($cron);
     }
 
-    return {
+    header 'Content-Type' => 'application/json';
+    return JSON::Any->objToJson({
         rules => \@rules,
         events => $events,
         devices => \@devices,
-    };
+    });
 };
 
 
-ajax '/loadDevices' => sub {
+get '/loadDevices' => sub {
     my $bridge = Wemo::Bridge->new();
 
     my @devices = ();
@@ -74,24 +74,26 @@ ajax '/loadDevices' => sub {
         };
     }
 
-    return {
+    header 'Content-Type' => 'application/json';
+    return JSON::Any->objToJson({
         devices => \@devices,
-    };
+    });
 };
 
-ajax '/toggleState' => sub {
+get '/toggleState' => sub {
     my $name = params->{'name'};
 
     my $bridge = Wemo::Bridge->new();
     my $device = $bridge->findLight(FriendlyName => $name);
     $device->isOn() ? $device->off() : $device->on();
 
-    return {
+    header 'Content-Type' => 'application/json';
+    return JSON::Any->objToJson({
         result => 'OK',
-    };
+    });
 };
 
-ajax '/dim' => sub {
+get '/dim' => sub {
     my $name = params->{'name'};
     my $value = params->{'value'};
 
@@ -99,12 +101,13 @@ ajax '/dim' => sub {
     my $device = $bridge->findLight(FriendlyName => $name);
     $device->dim($value);
 
-    return {
+    header 'Content-Type' => 'application/json';
+    return JSON::Any->objToJson({
         result => 'OK',
-    };
+    });
 };
 
-ajax '/save' => sub {
+get '/save' => sub {
     my $rules = from_json(params->{'rules'});
 
     my @entries = ();
@@ -115,9 +118,10 @@ ajax '/save' => sub {
 
     import_cron_entries(\@entries);
 
-    return {
+    header 'Content-Type' => 'application/json';
+    return JSON::Any->objToJson({
         result => 'OK',
-    };
+    });
 };
 
 get '/scheduler' => sub {
