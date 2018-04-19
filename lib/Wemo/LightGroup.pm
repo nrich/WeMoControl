@@ -126,5 +126,28 @@ sub FromXmlNode {
     return Wemo::LightGroup->new(%args);
 }
 
+sub CurrentState {
+    my ($self) = @_;
+
+    return $self->Devices()->[0]->CurrentState();
+}
+
+sub isOn {
+    my ($self) = @_;
+
+    my $state = $self->CurrentState();
+
+    return $state->[0] == 1;
+}
+
+sub level {
+    my ($self) = @_;
+
+    my $state = $self->CurrentState();
+
+    my ($level) = split ':', $state->[1];
+
+    return $level;
+}
 
 1;

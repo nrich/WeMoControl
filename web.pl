@@ -29,7 +29,7 @@ my $events = [
 ];
 
 get '/loadPage' => sub {
-    my $bridge = Wemo::Bridge->new();
+    my $bridge = Wemo::Bridge->new(timeout => 3);
 
     my @devices = ();
     for my $light (@{$bridge->lights()}) {
@@ -62,7 +62,7 @@ get '/loadPage' => sub {
 
 
 get '/loadDevices' => sub {
-    my $bridge = Wemo::Bridge->new();
+    my $bridge = Wemo::Bridge->new(timeout => 3);
 
     my @devices = ();
     for my $light (@{$bridge->lights()}) {
@@ -74,17 +74,26 @@ get '/loadDevices' => sub {
         };
     }
 
+    for my $group (@{$bridge->groups()}) {
+        push @devices, {
+            type => 'group',
+            name => $group->GroupName(),
+            state => $group->isOn(),
+            level => $group->level(),
+        };
+    }
+
     header 'Content-Type' => 'application/json';
     return JSON::Any->objToJson({
         devices => \@devices,
     });
 };
 
-get '/toggleState' => sub {
+post '/toggleState' => sub {
     my $name = params->{'name'};
 
-    my $bridge = Wemo::Bridge->new();
-    my $device = $bridge->findLight(FriendlyName => $name);
+    my $bridge = Wemo::Bridge->new(timeout => 3);
+    my $device = $bridge->findLight(FriendlyName => $name)||$bridge->findGroup(GroupName => $name);;
     $device->isOn() ? $device->off() : $device->on();
 
     header 'Content-Type' => 'application/json';
@@ -93,12 +102,12 @@ get '/toggleState' => sub {
     });
 };
 
-get '/dim' => sub {
+post '/dim' => sub {
     my $name = params->{'name'};
     my $value = params->{'value'};
 
-    my $bridge = Wemo::Bridge->new();
-    my $device = $bridge->findLight(FriendlyName => $name);
+    my $bridge = Wemo::Bridge->new(timeout => 3);
+    my $device = $bridge->findLight(FriendlyName => $name)||$bridge->findGroup(GroupName => $name);;
     $device->dim($value);
 
     header 'Content-Type' => 'application/json';
@@ -107,7 +116,7 @@ get '/dim' => sub {
     });
 };
 
-get '/save' => sub {
+post '/save' => sub {
     my $rules = from_json(params->{'rules'});
 
     my @entries = ();

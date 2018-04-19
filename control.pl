@@ -21,7 +21,7 @@ sub main {
 
     die "Need name\n" unless $opts{l} or $name;
 
-    my $bridge = Wemo::Bridge->new();
+    my $bridge = Wemo::Bridge->new({timeout => 2});
 
     if ($opts{l}) {
         for my $light (@{$bridge->lights()}) {
@@ -33,7 +33,18 @@ sub main {
         }
 
         for my $group (@{$bridge->groups()}) {
+	    #print Dumper $group;
             print "Group: ", $group->GroupName(), "\n";
+            print "\tOn: ", $group->isOn() ? ' Yes' : 'No', "\n";
+            print "\tLevel: ", $group->level(), "\n";
+
+            for my $light (@{$group->Devices()}) {
+                print "\tLight '", $light->FriendlyName(), "'\n";
+                print "\t\tOn: ", $light->isOn() ? ' Yes' : 'No', "\n";
+                print "\t\tLevel: ", $light->level(), "\n";
+                print "\t\tFirmware: ", $light->FirmwareVersion(), "\n";
+                print "\t\tIcon: ", $light->IconVersion(), "\n";
+            }
         }
 
         exit 0;
