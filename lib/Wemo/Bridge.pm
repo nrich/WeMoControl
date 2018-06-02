@@ -29,15 +29,23 @@ has 'groups' => (
 );
 
 sub _init {
-    my ($self, $timeout) = @_;
+    my ($self, $timeout, $retry) = @_;
 
     $timeout ||= 1;
+    $retry ||= 0;
 
     my $control = $self->UPnP_Control();
     
-    my @bridges = $control->search(st =>'urn:Belkin:device:bridge:1', mx => $timeout);
+    my @bridges = ();
+    for my $attempt (0 .. $retry) {
+        @bridges = $control->search(st =>'urn:Belkin:device:bridge:1', mx => $timeout);
+        last if @bridges;
+        print STDERR "Retrying...\n";
+    }
 
     foreach my $bridge (@bridges) {
+	next unless $bridge->getmanufacturer() =~ /belkin/i;
+
         my $udn = $bridge->getudn();
 
         my $service = $bridge->getservicebyname('urn:Belkin:service:bridge:1');
@@ -99,7 +107,7 @@ sub findGroup {
 sub BUILD {
     my ($self, $args) = @_;
 
-    $self->_init($args->{timeout}) unless $args->{no_init};
+    $self->_init($args->{timeout}, $args->{retry}) unless $args->{no_init};
 }
 
 1;

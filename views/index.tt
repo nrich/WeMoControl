@@ -5,14 +5,14 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <script src="//code.jquery.com/jquery-1.9.1.js"></script>
-        <script src="//code.jquery.com/ui/1.11.0/jquery-ui.min.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-min.js"></script>
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-        <script src="//github.com/gvas/knockout-jqueryui/releases/download/v2.2.2/knockout-jqueryui.min.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
-        <link href="//code.jquery.com/ui/1.12.0-rc.2/themes/smoothness/jquery-ui.css" rel="stylesheet">
+        <script src="js/jquery-1.9.1.js"></script>
+        <script src="js/jquery-ui.min.js"></script>
+        <script src="js/knockout-min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/knockout-jqueryui.min.js"></script>
+        <script src="js/jquery.ui.touch-punch.min.js"></script>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/jquery-ui.css" rel="stylesheet">
         
         <title>WeMo Control</title>
 

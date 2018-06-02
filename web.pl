@@ -18,18 +18,18 @@ use lib qw/lib/;
 use Wemo::Bridge qw//;
 
 my $events = [
-    {name => 'on', label => 'Turn On', commands => ['-o 1 -d 255 -r 2']},
-    {name => 'off' => label => 'Turn Off', commands => ['-o 0 -r 2']},
-    {name => 'in120' => label => 'Fade In (2 Minutes)', commands => ['-o 1 -d 1 -r 1', '-t 120 -d 255 -r 2']},
-    {name => 'in300' => label => 'Fade In (5 Minutes)', commands => ['-o 1 -d 1 -r 1', '-t 300 -d 255 -r 2']},
-    {name => 'in1800' => label => 'Fade In (30 Minutes)', commands => ['-o 1 -d 1 -r 1', '-t 1800 -d 255 -r 2']},
-    {name => 'out120' => label => 'Fade Out (2 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 120 -d 0 -r 2']},
-    {name => 'out300' => label => 'Fade Out (5 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 300 -d 0 -r 2']},
-    {name => 'out1800' => label => 'Fade Out (30 Minutes)', commands => ['-o 1 -d 255 -r 1', '-t 1800 -d 0 -r 2']},
+    {name => 'on', label => 'Turn On', commands => ['-o 1 -d 255 -r 5']},
+    {name => 'off' => label => 'Turn Off', commands => ['-o 0 -r 5']},
+    {name => 'in120' => label => 'Fade In (2 Minutes)', commands => ['-o 1 -d 1 -r 5', '-t 120 -d 255 -r 5']},
+    {name => 'in300' => label => 'Fade In (5 Minutes)', commands => ['-o 1 -d 1 -r 5', '-t 300 -d 255 -r 5']},
+    {name => 'in1800' => label => 'Fade In (30 Minutes)', commands => ['-o 1 -d 1 -r 5', '-t 1800 -d 255 -r 5']},
+    {name => 'out120' => label => 'Fade Out (2 Minutes)', commands => ['-o 1 -d 255 -r 5', '-t 120 -d 0 -r 5']},
+    {name => 'out300' => label => 'Fade Out (5 Minutes)', commands => ['-o 1 -d 255 -r 5', '-t 300 -d 0 -r 5']},
+    {name => 'out1800' => label => 'Fade Out (30 Minutes)', commands => ['-o 1 -d 255 -r 5', '-t 1800 -d 0 -r 5']},
 ];
 
 get '/loadPage' => sub {
-    my $bridge = Wemo::Bridge->new(timeout => 3);
+    my $bridge = Wemo::Bridge->new(timeout => 1, retry => 5);
 
     my @devices = ();
     for my $light (@{$bridge->lights()}) {
@@ -62,7 +62,7 @@ get '/loadPage' => sub {
 
 
 get '/loadDevices' => sub {
-    my $bridge = Wemo::Bridge->new(timeout => 3);
+    my $bridge = Wemo::Bridge->new(timeout => 1, retry => 5);
 
     my @devices = ();
     for my $light (@{$bridge->lights()}) {
@@ -92,7 +92,7 @@ get '/loadDevices' => sub {
 post '/toggleState' => sub {
     my $name = params->{'name'};
 
-    my $bridge = Wemo::Bridge->new(timeout => 3);
+    my $bridge = Wemo::Bridge->new(timeout => 1, retry => 5);
     my $device = $bridge->findLight(FriendlyName => $name)||$bridge->findGroup(GroupName => $name);;
     $device->isOn() ? $device->off() : $device->on();
 
@@ -106,7 +106,7 @@ post '/dim' => sub {
     my $name = params->{'name'};
     my $value = params->{'value'};
 
-    my $bridge = Wemo::Bridge->new(timeout => 3);
+    my $bridge = Wemo::Bridge->new(timeout => 1, retry => 5);
     my $device = $bridge->findLight(FriendlyName => $name)||$bridge->findGroup(GroupName => $name);;
     $device->dim($value);
 
